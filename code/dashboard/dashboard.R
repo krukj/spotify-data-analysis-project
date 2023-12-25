@@ -41,6 +41,12 @@ html_box_body <- HTML(".wrapper .box .box-body{
  background-color:#182f37;
 }")
 
+html_dens_plot <- HTML("#density_plot{
+ transform:translatex(0px) translatey(0px);
+ position:relative;
+ top:53px;
+}")
+
 # app
 ui <- dashboardPage(
   dashboardHeader(title = "Spotify dashboard"),
@@ -55,23 +61,23 @@ ui <- dashboardPage(
   
   dashboardBody(
     tags$head(tags$style(
-   html_wrapper, html_table, html_table_data, html_row, html_navig, html_sidebar,
-   html_logo, html_content_div, html_box_body
+      html_wrapper, html_table, html_table_data, html_row, html_navig, html_sidebar,
+      html_logo, html_content_div, html_box_body, html_dens_plot
     )
-   ),
+    ),
     fluidRow(
       # left column
       box(
         htmlOutput("text_songs"),
         tableOutput("table"),
         plotlyOutput("repart_plot")
-        ),
+      ),
       # right column
       box(
         htmlOutput("text_artist"),
         plotlyOutput("density_plot")
-        )
       )
+    )
   )
 )
 
@@ -79,7 +85,7 @@ server <- function(input, output) {
   
   output$text_songs <- renderText({
     HTML(paste(
-    "<span style=
+      "<span style=
     'font-size: 15px;
     color:#ecf0f1; 
     font-size:26px;
@@ -149,11 +155,11 @@ server <- function(input, output) {
         xaxis = list(title = list(text = "Hour",
                                   font = list(size = 15, color = "#ecf0f1")), 
                      tickfont = list(size = 14, color = '#ecf0f1'),
-                     showgrid = TRUE, gridcolor = '#ecf0f1', gridwidth = 0.05),
+                     showgrid = TRUE, gridcolor = '#385a65', gridwidth = 0.05),
         yaxis = list(title = list(text = "Repartition (%)", 
                                   font = list(size = 15, color = "#ecf0f1")), 
                      tickfont = list(size = 14, color = '#ecf0f1'),
-                     showgrid = TRUE, gridcolor = '#ecf0f1', gridwidth = 0.05),
+                     showgrid = TRUE, gridcolor = '#385a65', gridwidth = 0.05),
         plot_bgcolor = "#182f37",
         paper_bgcolor = "#182f37",
         showlegend = FALSE,
@@ -220,28 +226,34 @@ server <- function(input, output) {
   })
   
   output$density_plot <- renderPlotly({
-    julka_data %>%
+    
+    dens_plot <- julka_data %>%
       filter(artist_name == fav_artist_name[[1]]) %>% 
-      ggplot(aes(x = artist_name, y = tempo)) +
+      ggplot(aes(x = artist_name, y = tempo, text = 
+                   paste("</br><b>Artist: </b>", fav_artist_name[[1]],
+                         "</br><b>Tempo: </b>"))) +
       geom_violin(fill = "#1DB954", color = "#1DB954", size = 0.5) +
-      scale_y_continuous(limits = c(50, 210), expand = c(0, 0)) +
-      coord_flip() +
-      labs(x = "artist",
-           y = "tempo",
-           title = paste("Distribution of listened songs tempo for", fav_artist_name[[1]])) +
-      theme(
-        plot.title = element_text(size = 15, hjust = 0.5, color = '#ecf0f1'),
-        panel.background = element_rect(fill = "#182f37"),
-        plot.background = element_rect(fill = "#182f37"), 
-        axis.text.y = element_blank(),
-        axis.text.x = element_text(size = 10, color = '#ecf0f1'),
-        axis.title.x = element_text(size = 10, color = '#ecf0f1'),
-        axis.title.y = element_blank(),
-        panel.border = element_rect(color = "#ecf0f1", fill = NA, size = 0.5),
-        panel.grid.major = element_line(color = "#ecf0f1", size = 0.1),
-        panel.grid.minor = element_line(color = "#ecf0f1", size = 0.1)
-      ) -> dens_plot
-    dens_plot <- ggplotly(dens_plot)
+      coord_flip()
+    
+    dens_plot <- ggplotly(dens_plot, tooltip = "text") %>%
+      layout(
+        title = list(text = paste("Distribution of listened songs tempo for",
+                                  fav_artist_name[[1]]),
+                     font = list(size = 15, color = "#ecf0f1")),
+        hoverlabel = list(font = list(color = '#ecf0f1')),
+        xaxis = list(title = list(text = "Tempo",
+                                  font = list(size = 15, color = "#ecf0f1")), 
+                     tickfont = list(size = 14, color = '#ecf0f1'),
+                     showgrid = TRUE, gridcolor = '#385a65', gridwidth = 0.05),
+        yaxis = list(title = list(text = ""), 
+                     tickfont = list(size = 14, color = 'transparent'),
+                     showgrid = TRUE, gridcolor = '#385a65', gridwidth = 0.05),
+        plot_bgcolor = "#182f37",
+        paper_bgcolor = "#182f37",
+        showlegend = FALSE,
+        hoverlabel = list(font = list(color = '#ecf0f1'))
+      )
+    
     dens_plot
   })
 }
