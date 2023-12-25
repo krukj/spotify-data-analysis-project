@@ -55,7 +55,11 @@ ui <- dashboardPage(
     sidebarMenu(
       menuItem(" Julka", tabName = "dashboard", icon = icon("dog")),
       menuItem(" Nadia", tabName = "dashboard", icon = icon("cat")),
-      menuItem(" Tomek", tabName = "dashboard", icon = icon("dog"))
+      menuItem(" Tomek", tabName = "dashboard", icon = icon("dog")),
+      splitLayout(cellWidths = c("50%", "50%"),
+                  dateInput("datefrom", "Date From:", format = "dd/mm/yy", 
+                            Sys.Date()-30, min = "2015-10-21"),
+                  dateInput("dateto", "Date To:", format = "dd/mm/yy", Sys.Date()))
     )
   ),
   
@@ -96,7 +100,7 @@ server <- function(input, output) {
   
   output$table <- renderTable({
     julka_data %>% 
-      # filter time ...
+      filter(time > input$datefrom & time < input$dateto) %>% 
       group_by(track_name, artist_name, album_name) %>%
       summarise(
         minutes_listened = sum(ms_played) / (1000 * 60),
@@ -104,19 +108,23 @@ server <- function(input, output) {
       ) %>%
       arrange(desc(songs_played)) %>%
       na.omit() %>%
-      head(10)
+      head(10) %>% 
+      rename(
+        "Track" = track_name,
+        "Artist" = artist_name,
+        "Album" = album_name,
+        "Minutes" = minutes_listened,
+        "Times" = songs_played
+      )
   })
   
   output$repart_plot <- renderPlotly({
     
     data_with_hour <- julka_data
-    data_with_hour$time <- strptime(data_with_hour$time, 
-                                    format ="%Y-%m-%d %H:%M:%S")
-    data_with_hour$hour <- format(data_with_hour$time, "%H")
-    
+    data_with_hour$hour <- format(as.POSIXlt(data_with_hour$time), "%H")
     
     listening_repartition <- data_with_hour %>% 
-      # filter time ...
+      filter(time > input$datefrom & time < input$dateto) %>%
       group_by(hour) %>% 
       summarise(minutes_listened = sum(ms_played) / (1000 * 60)) %>% 
       mutate(total_time = sum(minutes_listened),
@@ -170,22 +178,25 @@ server <- function(input, output) {
     p
   })
   
-  # favourite artist info
-  fav_artist_df <- julka_data %>% 
-    # filter time ...
-    group_by(artist_name) %>% 
-    summarise(
-      minutes_listened = round(sum(ms_played) / (1000 * 60)),
-      songs_played = n()
-    ) %>%
-    arrange(desc(songs_played)) %>%
-    na.omit() %>%
-    head(1)
-  fav_artist_name <- fav_artist_df[[1]]
-  minutes_played <- fav_artist_df[2]
-  songs_played <- fav_artist_df[3]
   
   output$text_artist <- renderText({
+    
+    # favourite artist info
+    fav_artist_df <- julka_data %>% 
+      filter(time > input$datefrom & time < input$dateto) %>%
+      group_by(artist_name) %>% 
+      summarise(
+        minutes_listened = round(sum(ms_played) / (1000 * 60)),
+        songs_played = n()
+      ) %>%
+      arrange(desc(songs_played)) %>%
+      na.omit() %>%
+      head(1)
+    fav_artist_name <- fav_artist_df[[1]]
+    minutes_played <- fav_artist_df[2]
+    songs_played <- fav_artist_df[3]
+    
+    # text
     HTML(paste(
       "<span style=
       'font-size: 15px; 
@@ -227,8 +238,20 @@ server <- function(input, output) {
   
   output$density_plot <- renderPlotly({
     
+    fav_artist_df <- julka_data %>% 
+      filter(time > input$datefrom & time < input$dateto) %>%
+      group_by(artist_name) %>% 
+      summarise(
+        minutes_listened = round(sum(ms_played) / (1000 * 60)),
+        songs_played = n()
+      ) %>%
+      arrange(desc(songs_played)) %>%
+      na.omit() %>%
+      head(1)
+    fav_artist_name <- fav_artist_df[[1]]
+    
     dens_plot <- julka_data %>%
-      filter(artist_name == fav_artist_name[[1]]) %>% 
+      filter(artist_name == fav_artist_name) %>% 
       ggplot(aes(x = artist_name, y = tempo, text = 
                    paste("</br><b>Artist: </b>", fav_artist_name[[1]],
                          "</br><b>Tempo: </b>"))) +
