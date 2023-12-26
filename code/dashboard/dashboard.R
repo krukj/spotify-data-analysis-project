@@ -54,9 +54,10 @@ ui <- dashboardPage(
   
   dashboardSidebar(
     sidebarMenu(
-      menuItem(" Julka", tabName = "dashboard", icon = icon("dog")),
-      menuItem(" Nadia", tabName = "dashboard", icon = icon("cat")),
-      menuItem(" Tomek", tabName = "dashboard", icon = icon("dog")),
+      id = "tabs",
+      menuItem(" Julka", tabName = "julka_tab", icon = icon("dog")),
+      menuItem(" Nadia", tabName = "nadia_tab", icon = icon("cat")),
+      menuItem(" Tomek", tabName = "tomek_tab", icon = icon("dog")),
       splitLayout(cellWidths = c("50%", "50%"),
                   dateInput("datefrom", "Date From:", format = "dd/mm/yy", 
                             Sys.Date()-30, min = "2015-10-21"),
@@ -92,9 +93,16 @@ server <- function(input, output) {
     datefrom <- input$datefrom
     dateto <- input$dateto
     
-    # Filter the data based on date ranges
-    julka_data %>%
-      filter(time > datefrom & time < dateto)
+    # Choose person and filter the data based on date ranges 
+    if (input$tabs == "tomek_tab") {
+      tomek_data %>%
+        filter(time > datefrom & time < dateto)
+    } else if (input$tabs == "julka_tab") {
+      julka_data %>%
+        filter(time > datefrom & time < dateto)
+    }
+    
+    
   })
   
   output$text_songs <- renderText({
