@@ -6,6 +6,7 @@ library(shinydashboard)
 
 
 julka_data <- read.csv("julka_extended.csv") 
+tomek_data <- read.csv("tomek_extended.csv")
 
 
 
