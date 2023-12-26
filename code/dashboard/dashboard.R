@@ -8,6 +8,7 @@ library(shinydashboard)
 julka_data <- read.csv("julka_extended.csv") 
 
 
+
 # css
 html_wrapper <- HTML(".wrapper .row{
     background-color:#182f37;}")
@@ -87,6 +88,15 @@ ui <- dashboardPage(
 
 server <- function(input, output) { 
   
+  filtered_data <- reactive({
+    datefrom <- input$datefrom
+    dateto <- input$dateto
+    
+    # Filter the data based on date ranges
+    julka_data %>%
+      filter(time > datefrom & time < dateto)
+  })
+  
   output$text_songs <- renderText({
     HTML(paste(
       "<span style=
@@ -99,8 +109,7 @@ server <- function(input, output) {
     top:-4px;'>Top 10 songs</span><br>"))})
   
   output$table <- renderTable({
-    julka_data %>% 
-      filter(time > input$datefrom & time < input$dateto) %>% 
+    filtered_data() %>% 
       group_by(track_name, artist_name, album_name) %>%
       summarise(
         minutes_listened = sum(ms_played) / (1000 * 60),
@@ -118,13 +127,13 @@ server <- function(input, output) {
       )
   })
   
+  
   output$repart_plot <- renderPlotly({
     
-    data_with_hour <- julka_data
+    data_with_hour <- filtered_data()
     data_with_hour$hour <- format(as.POSIXlt(data_with_hour$time), "%H")
     
     listening_repartition <- data_with_hour %>% 
-      filter(time > input$datefrom & time < input$dateto) %>%
       group_by(hour) %>% 
       summarise(minutes_listened = sum(ms_played) / (1000 * 60)) %>% 
       mutate(total_time = sum(minutes_listened),
@@ -182,8 +191,7 @@ server <- function(input, output) {
   output$text_artist <- renderText({
     
     # favourite artist info
-    fav_artist_df <- julka_data %>% 
-      filter(time > input$datefrom & time < input$dateto) %>%
+    fav_artist_df <- filtered_data() %>% 
       group_by(artist_name) %>% 
       summarise(
         minutes_listened = round(sum(ms_played) / (1000 * 60)),
@@ -238,8 +246,7 @@ server <- function(input, output) {
   
   output$density_plot <- renderPlotly({
     
-    fav_artist_df <- julka_data %>% 
-      filter(time > input$datefrom & time < input$dateto) %>%
+    fav_artist_df <- filtered_data() %>% 
       group_by(artist_name) %>% 
       summarise(
         minutes_listened = round(sum(ms_played) / (1000 * 60)),
@@ -250,7 +257,7 @@ server <- function(input, output) {
       head(1)
     fav_artist_name <- fav_artist_df[[1]]
     
-    dens_plot <- julka_data %>%
+    dens_plot <- filtered_data() %>%
       filter(artist_name == fav_artist_name) %>% 
       ggplot(aes(x = artist_name, y = tempo, text = 
                    paste("</br><b>Artist: </b>", fav_artist_name[[1]],
