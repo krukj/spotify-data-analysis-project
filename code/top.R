@@ -65,14 +65,20 @@ listening_repartition <- data_with_hour %>%
 
 listening_repart_plot <- ggplot(listening_repartition,
                                 aes(x = hour, y = repartition)) + 
-  geom_bar(stat = "identity") +
+  geom_bar(stat = "identity", color = "#1DB954", fill = "#1DB954") +
   scale_y_continuous(labels = scales::percent_format(scale = 1), 
                      limits = c(0, 7.5)) +
   labs(title = "Listening repartition over day") +
-  theme_light() +
   theme(
-    plot.title = element_text(hjust = 0.5, margin = margin(b = 10))
-  )
+    plot.title = element_text(size = 22, hjust = 0.5, color = '#1DB954'),
+    panel.background = element_rect(fill = "#191414"),
+    plot.background = element_rect(fill = "#191414"), 
+    axis.text.y = element_text(size = 14, color = '#1DB954'),
+    axis.text.x = element_text(size = 14, color = '#1DB954'),
+    axis.title = element_text(size = 18, color = '#1DB954'),
+    panel.border = element_rect(color = "#3b3939", fill = NA, size = 0.5),
+    panel.grid.major = element_line(color = "#3b3939", size = 0.1),
+    panel.grid.minor = element_line(color = "#3b3939", size = 0.1))
 
 listening_repart_plot
 ggplotly(listening_repart_plot)

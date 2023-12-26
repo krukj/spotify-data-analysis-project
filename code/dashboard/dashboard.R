@@ -197,10 +197,8 @@ server <- function(input, output) {
   })
   
   
-  output$text_artist <- renderText({
-    
-    # favourite artist info
-    fav_artist_df <- filtered_data() %>% 
+  fav_artist_df <- reactive({
+    filtered_data() %>% 
       group_by(artist_name) %>% 
       summarise(
         minutes_listened = round(sum(ms_played) / (1000 * 60)),
@@ -209,9 +207,13 @@ server <- function(input, output) {
       arrange(desc(songs_played)) %>%
       na.omit() %>%
       head(1)
-    fav_artist_name <- fav_artist_df[[1]]
-    minutes_played <- fav_artist_df[2]
-    songs_played <- fav_artist_df[3]
+  })
+  output$text_artist <- renderText({
+    
+    # favourite artist info
+    fav_artist_name <- fav_artist_df()[[1]]
+    minutes_played <- fav_artist_df()[2]
+    songs_played <- fav_artist_df()[3]
     
     # text
     HTML(paste(
@@ -255,22 +257,12 @@ server <- function(input, output) {
   
   output$density_plot <- renderPlotly({
     
-    fav_artist_df <- filtered_data() %>% 
-      group_by(artist_name) %>% 
-      summarise(
-        minutes_listened = round(sum(ms_played) / (1000 * 60)),
-        songs_played = n()
-      ) %>%
-      arrange(desc(songs_played)) %>%
-      na.omit() %>%
-      head(1)
-    fav_artist_name <- fav_artist_df[[1]]
+    fav_artist_name <- fav_artist_df()[[1]]
     
     dens_plot <- filtered_data() %>%
       filter(artist_name == fav_artist_name) %>% 
       ggplot(aes(x = artist_name, y = tempo, text = 
-                   paste("</br><b>Artist: </b>", fav_artist_name[[1]],
-                         "</br><b>Tempo: </b>"))) +
+                   paste("</br><b>Artist: </b>", fav_artist_name[[1]]))) +
       geom_violin(fill = "#1DB954", color = "#1DB954", size = 0.5) +
       coord_flip()
     
