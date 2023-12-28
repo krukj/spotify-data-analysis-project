@@ -9,7 +9,6 @@ julka_data <- read.csv("julka_extended.csv")
 tomek_data <- read.csv("tomek_extended.csv")
 
 
-
 # css
 html_wrapper <- HTML(".wrapper .row{
     background-color:#182f37;}")
@@ -43,68 +42,123 @@ html_box_body <- HTML(".wrapper .box .box-body{
  background-color:#182f37;
 }")
 
-html_dens_plot <- HTML("#density_plot{
- transform:translatex(0px) translatey(0px);
- position:relative;
- top:53px;
+html_name <- HTML("#name span{
+ font-size:38px;
+ display:inline-block;
+ transform:translatex(10px) translatey(0px);
 }")
 
-# app
-ui <- dashboardPage(
-  dashboardHeader(title = "Spotify dashboard"),
-  
-  dashboardSidebar(
-    sidebarMenu(
-      id = "tabs",
-      menuItem(" Julka", tabName = "julka_tab", icon = icon("dog")),
-      menuItem(" Nadia", tabName = "nadia_tab", icon = icon("cat")),
-      menuItem(" Tomek", tabName = "tomek_tab", icon = icon("dog")),
-      splitLayout(cellWidths = c("50%", "50%"),
-                  dateInput("datefrom", "Date From:", format = "dd/mm/yy", 
-                            Sys.Date()-30, min = "2015-10-21"),
-                  dateInput("dateto", "Date To:", format = "dd/mm/yy", Sys.Date()))
-    )
-  ),
-  
-  dashboardBody(
-    tags$head(tags$style(
-      html_wrapper, html_table, html_table_data, html_row, html_navig, html_sidebar,
-      html_logo, html_content_div, html_box_body, html_dens_plot
-    )
+html_wrapper_box <- HTML(".wrapper .box{
+ top:16px;
+}")
+
+html_datefrom <- HTML("#datefrom{
+ transform:translatex(0px) translatey(0px);
+ position:relative;
+ top:12px;
+}")
+
+html_dateto <- HTML("#dateto{
+ transform:translatex(0px) translatey(0px);
+ position:relative;
+ top:12px;
+}")
+
+header <- dashboardHeader(
+  title = "Spotify dashboard"
+)
+
+sidebar <- dashboardSidebar(
+  sidebarMenu(
+    menuItem(" Spotify", tabName = "one_person", icon = icon("dog")),
+    menuItem(" Blend", tabName = "blend", icon = icon("dog")),
+    prettyRadioButtons(
+      inputId = "person",
+      label = "Choose person:", 
+      choices = c("  Julka", "  Nadia", "  Tomek"),
+      fill = TRUE,
+      animation = NULL
     ),
-    fluidRow(
-      # left column
-      box(
-        htmlOutput("text_songs"),
-        tableOutput("table"),
-        plotlyOutput("repart_plot")
-      ),
-      # right column
-      box(
-        htmlOutput("text_artist"),
-        plotlyOutput("density_plot")
-      )
-    )
+    splitLayout(cellWidths = c("50%", "50%"),
+                dateInput("datefrom", "Date From:", format = "dd/mm/yy", 
+                          Sys.Date()-30, min = "2015-10-21"),
+                dateInput("dateto", "Date To:", format = "dd/mm/yy", Sys.Date()))
+  ),
+  tags$style(html_datefrom, html_dateto)
+)
+
+body <- dashboardBody(
+  tabItems(
+    tabItem(tabName = "one_person",
+            tags$head(tags$style(
+              html_wrapper, html_table, html_table_data, html_row, html_navig,
+              html_sidebar, html_logo, html_content_div, html_box_body,
+              html_name, html_wrapper_box
+            )
+            ),
+            htmlOutput("name"),
+            fluidRow(
+              # left column
+              box(
+                htmlOutput("text_songs"),
+                tableOutput("table"),
+                plotlyOutput("repart_plot")
+              ),
+              # right column
+              box(
+                htmlOutput("text_artist"),
+                plotlyOutput("density_plot")
+              )
+            )
+    ),
+    tabItem(tabName = "blend")
   )
 )
 
-server <- function(input, output) { 
+# app
+ui <- dashboardPage(
+  header,
+  sidebar,
+  body
+  
+)
+
+server <- function(input, output, session) {
   
   filtered_data <- reactive({
     datefrom <- input$datefrom
     dateto <- input$dateto
     
-    # Choose person and filter the data based on date ranges 
-    if (input$tabs == "tomek_tab") {
+    # Use the selected 'person' to filter the appropriate data frame
+    if (input$person == "  Tomek") {
       tomek_data %>%
         filter(time > datefrom & time < dateto)
-    } else if (input$tabs == "julka_tab") {
+    } else if (input$person == "  Julka") {
       julka_data %>%
         filter(time > datefrom & time < dateto)
+    } else if (input$person == "  Nadia") {
+      nadia_data %>%
+        filter(time > datefrom & time < dateto)
     }
-    
-    
   })
+  
+  person_name <- reactive({
+    input$person
+  })
+  
+  output$name <- renderText(
+    HTML(paste("<span style = 'color: #ffffff; 
+               line-height: 1.3em; 
+               text-transform: uppercase; 
+               text-align: left;
+               text-decoration:none;
+               text-shadow:none;
+               white-space:normal;
+               letter-spacing:4.1px;
+               word-spacing:-1.1px;
+               column-count:1;
+               direction:ltr;'</span>", person_name()))
+  )
   
   output$text_songs <- renderText({
     HTML(paste(
@@ -287,6 +341,9 @@ server <- function(input, output) {
     
     dens_plot
   })
+  
 }
 
-shinyApp(ui, server)
+
+
+shinyApp(ui, server)      
