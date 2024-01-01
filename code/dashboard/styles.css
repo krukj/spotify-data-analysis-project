@@ -1,0 +1,76 @@
+#artist_image img{
+ margin-left:30px;
+ margin-right:10px;
+ position:relative;
+ left:-20px;
+}
+
+.wrapper .main-header nav{
+ background-color:#385a65 !important;
+}
+
+#shiny-tab-one_person .row{
+ background-color:#182f37;
+}
+
+.wrapper .content{
+ background-color:#182f37;
+}
+
+#text_artist{
+ background-color:#182f37;
+}
+
+.col-sm-2 .box .box-body{
+ background-color:#182f37;
+}
+
+#text_songs{
+ background-color:#182f37;
+}
+
+.shiny-table tr td{
+ background-color:#182f37;
+ color:#ecf0f1;
+}
+
+.shiny-table tr th{
+ background-color:#182f37;
+ color:#ecf0f1;
+}
+
+#artist_image{
+ background-image:none;
+ background-color:#182f37;
+}
+
+#shiny-tab-one_person .row .col-sm-6 .box .box-body{
+ transform:translatex(0px) translatey(0px);
+ background-color:#182f37;
+}
+
+.col-sm-4 .box .box-body{
+ background-color:#182f37;
+}
+
+#name span{
+ font-size:38px;
+ display:inline-block;
+ transform:translatex(10px) translatey(0px);
+}
+
+#sidebarCollapsed{
+ background-color:#182f37;
+}
+
+.wrapper .main-header .logo{
+ background-color:#385a65;
+}
+
+#repart_plot .svg-container{
+ bottom:-4px;
+}
+
+#density_plot .svg-container{
+ bottom:-4px;
+}
