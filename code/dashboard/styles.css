@@ -74,3 +74,18 @@
 #density_plot .svg-container{
  bottom:-4px;
 }
+
+/* Table Data */
+.shiny-table tr td{
+ transform:translatex(0px) translatey(0px);
+}
+
+#top span{
+ font-size:38px;
+ display:inline-block;
+ transform:translatex(10px) translatey(0px);
+}
+
+
+
+

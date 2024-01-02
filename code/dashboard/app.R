@@ -10,6 +10,9 @@ library(data.table)
 julka_data <- read.csv("julka_data_extended.csv")
 tomek_data <- read.csv("tomek_data_extended.csv")
 
+all_data <- bind_rows(julka_data, tomek_data) %>% 
+  filter(!is.na(track_name))
+
 styles_file <- includeCSS("styles.css")
 
 css_sidebar <- HTML("#sidebarCollapsed{
@@ -30,8 +33,8 @@ header <- dashboardHeader(
 sidebar <- dashboardSidebar(
   tags$style(css_sidebar, css_logo),
   sidebarMenu(
-    menuItem(" Spotify", tabName = "one_person", icon = icon("dog")),
     menuItem(" Blend", tabName = "blend", icon = icon("dog")),
+    menuItem(" Spotify", tabName = "one_person", icon = icon("dog")),
     prettyRadioButtons(
       inputId = "person",
       label = "Choose person:", 
@@ -48,11 +51,10 @@ sidebar <- dashboardSidebar(
 )
 
 body <- dashboardBody(
+  tags$head(tags$style(styles_file
+  )),
   tabItems(
     tabItem(tabName = "one_person",
-            tags$head(tags$style(styles_file
-            )
-            ),
             htmlOutput("name"),
             fluidRow(
               column(width = 6,
@@ -78,23 +80,34 @@ body <- dashboardBody(
                      )
               ),
               column(width = 6,
-                     plotlyOutput("density_plot")
+                     plotlyOutput("density_plot",
+                                  width = "100%",
+                                  height = "300px")
               )
             )
     ),
     tabItem(tabName = "blend",
+            htmlOutput("top"),
             fluidRow(
-              column(width = 6,
+              column(width = 4,
                      box(
                        width = 12,
+                       htmlOutput("choice"),
                        selectInput(
                          inputId = "select",
-                         choices = c("Listening time", "Average tempo"),
-                         label = "TOP"
+                         choices = c("Listening time", 
+                                     "Average tempo",
+                                     "Number of artists",
+                                     "Average followers number",
+                                     "Favourite genre"),
+                         label = NULL
                        ),
                        tableOutput("rank")
                      )
-              ))
+              ),
+              column(width = 8),
+              column(width = 12,
+                     plotlyOutput("minutes_plot")))
     )
   )
 )
@@ -108,7 +121,7 @@ ui <- dashboardPage(
 )
 
 server <- function(input, output, session) {
-  
+  updateTabItems(session, "blend", T)
   filtered_data <- reactive({
     datefrom <- input$datefrom
     dateto <- input$dateto
@@ -173,7 +186,8 @@ server <- function(input, output, session) {
         "Minutes" = minutes_listened,
         "Times" = songs_played
       )
-  })
+  },
+  width = "100%")
   
   
   output$repart_plot <- renderPlotly({
@@ -284,7 +298,8 @@ server <- function(input, output, session) {
   
   output$artist_image <- renderText({
     img_src <- fav_artist_df()$image
-    img_tag <- paste('<img src="', img_src, '"', 
+    img_tag <- paste('<div style="text-align:center;">', 
+                     '<img src="', img_src, '"', 
                      'width="300px" height="300px">', sep = "")
     return(img_tag)
   })
@@ -327,15 +342,151 @@ server <- function(input, output, session) {
   })
   
   
-  
-  
   # BLEND
+  output$top <- renderText(
+    HTML(paste("<span style = 'color: #ffffff; 
+               line-height: 1.3em; 
+               text-transform: uppercase; 
+               text-align: left;
+               text-decoration:none;
+               text-shadow:none;
+               white-space:normal;
+               letter-spacing:4.1px;
+               word-spacing:-1.1px;
+               column-count:1;
+               direction:ltr;
+               top:-8px;' >BLEND</span><br>"))
+  )
+  
+  output$choice <- renderText({
+    HTML(paste(
+      "<span style=
+    'font-size: 15px;
+    color:#ecf0f1; 
+    font-size:26px;
+    text-align:right;
+    font-weight:600;
+    position:relative;
+    top:-4px;'>Compare by</span><br>"))})
+  
   
   output$rank <- renderTable({
     if (input$select == "Listening time") {
-      
+      all_data %>% 
+        group_by(username) %>% 
+        summarise(minutes_listened = sum(ms_played) / (60 * 1000)) %>% 
+        arrange(-minutes_listened) %>% 
+        rename(
+          "Name" = username,
+          "Minutes listened" = minutes_listened
+        )
+    } else if (input$select == "Average tempo") {
+      all_data %>% 
+        group_by(username) %>% 
+        summarise(average_tempo = mean(tempo, na.rm = T)) %>% 
+        arrange(-average_tempo) %>% 
+        rename(
+          "Name" = username,
+          "Average tempo" = average_tempo
+        )
+    } else if (input$select == "Number of artists") {
+      all_data %>% 
+        group_by(username) %>% 
+        summarise(artists_number = n_distinct(artist_name)) %>% 
+        arrange(-artists_number) %>% 
+        rename(
+          "Name" = username,
+          "Number of unique artists" = artists_number
+        )
+    } else if (input$select == "Average followers number") {
+      all_data %>%
+        group_by(username, artist_name) %>%
+        summarise(average_followers_n = mean(followers, na.rm = TRUE)) %>%
+        group_by(username) %>%
+        summarise(average_followers_n = 
+                    as.integer(round(mean(average_followers_n, 
+                                          na.rm = TRUE)))) %>% 
+        arrange(-average_followers_n) %>% 
+        rename(
+          "Name" = username,
+          "Average number of artist's followers" = average_followers_n
+        )
+    } else if (input$select == "Favourite genre") {
+      all_data %>% 
+        group_by(username) %>% 
+        summarise(fav_genre = 
+                    levels(factor(genre))[which.max(table(genre))]) %>% 
+        rename(
+          "Name" = username,
+          "Favourite genre" = fav_genre
+        )
     }
+  },
+  width = "100%",
+  align = "c"
+  )
+  
+  output$minutes_plot <- renderPlotly({
     
+    df1 <- julka_data %>% 
+      mutate(date = as.Date(time, format = "%Y-%m-%d")) 
+    
+    df2 <- tomek_data %>% 
+      mutate(date = as.Date(time, format = "%Y-%m-%d")) %>% 
+      filter(date > "2019-01-01") # bo byla tylko jakas jedna wartosc przed 2020
+    
+    df1$date <- as.Date(df1$date)
+    df2$date <- as.Date(df2$date)
+    
+    minutes_per_day_j <- df1 %>%
+      group_by(date) %>%
+      summarise(total_minutes = sum(ms_played) / (60 * 1000)) %>%
+      arrange(date) %>%
+      mutate(cumsum = cumsum(total_minutes)) %>% 
+      mutate(name = "Julka")
+    
+    
+    minutes_per_day_t <- df2 %>% 
+      group_by(date) %>%
+      summarise(total_minutes = sum(ms_played) / (60 * 1000)) %>%
+      arrange(date) %>%
+      mutate(cumsum = cumsum(total_minutes)) %>% 
+      mutate(name = "Tomek")
+    
+    df <- bind_rows(minutes_per_day_j, minutes_per_day_t)
+    
+    
+    minutes_plotly <- plot_ly(df, x = ~date, y = ~cumsum, color = ~name, 
+                              hoverinfo ="text",
+                              text = ~paste("</br><b>Name:</b>", name, 
+                                            "</br><b>Date:</b> ", date, 
+                                            "</br><b>Minutes:</b> ", round(cumsum)),
+                              type = "scatter", mode = "lines",
+                              colors = c("#EF5571", "#A386C0")) %>%
+      layout(
+        title = list(text = "Total minutes listened", 
+                     y = 0.98, x = 0.5, xanchor = "center", yanchor =  "top",
+                     font = list(size = 15, color = "#ecf0f1")),
+        xaxis = list(title = list(text = "Date",
+                                  font = list(size = 15, color = "#ecf0f1")), 
+                     tickfont = list(size = 14, color = '#ecf0f1'),
+                     showgrid = TRUE, gridcolor = '#385a65', gridwidth = 0.05,
+                     rangeslider = list(type = "date")),
+        yaxis = list(title = list(text = "Minutes", 
+                                  font = list(size = 15, color = "#ecf0f1")), 
+                     tickfont = list(size = 14, color = '#ecf0f1'),
+                     showgrid = TRUE, gridcolor = '#385a65', gridwidth = 0.05),
+        legend = list(
+          title = list(text = "Person", font = list(color = "#ecf0f1")),
+          font = list(size = 12, color = "#ecf0f1"),
+          bgcolor = "#182f37"
+        ),
+        plot_bgcolor = "#182f37",
+        paper_bgcolor = "#182f37",
+        hoverlabel = list(font = list(color = '#ecf0f1'))
+      )
+    
+    minutes_plotly
   })
   
 }
