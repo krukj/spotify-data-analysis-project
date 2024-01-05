@@ -7,11 +7,10 @@ library(shinyWidgets)
 library(dtplyr)
 library(data.table)
 
-julka_data <- read.csv("julka_data_extended.csv")
-tomek_data <- read.csv("tomek_data_extended.csv")
+julka_data <- read.csv("julka_filtered_data.csv")
+tomek_data <- read.csv("tomek_filtered_data.csv")
 
-all_data <- bind_rows(julka_data, tomek_data) %>% 
-  filter(!is.na(track_name))
+all_data <- bind_rows(julka_data, tomek_data)
 
 styles_file <- includeCSS("styles.css")
 
@@ -42,9 +41,9 @@ sidebar <- dashboardSidebar(
       fill = TRUE,
       animation = NULL
     ),
-    splitLayout(cellWidths = c("50%", "50%"),
+    splitLayout(cellWidths = c("50%", "50%"),  
                 dateInput("datefrom", "Date from:", format = "dd/mm/yy", 
-                          Sys.Date()-30, min = "2015-10-21"),
+                          Sys.Date()-30, min = "2015-10-21"), # ustawic dobre min i max !!!
                 dateInput("dateto", "Date to:", format = "dd/mm/yy", 
                           Sys.Date()))
   )
@@ -105,7 +104,16 @@ body <- dashboardBody(
                        tableOutput("rank")
                      )
               ),
-              column(width = 8),
+              column(width = 4,
+                     box(
+                       width = 12,
+                       htmlOutput("mutual_artist")
+                     )),
+              column(width = 4,
+                     box(
+                       width = 12,
+                       htmlOutput("mutual_song")
+                     )),
               column(width = 12,
                      plotlyOutput("minutes_plot")))
     )
@@ -170,6 +178,7 @@ server <- function(input, output, session) {
   output$table <- renderTable({
     filtered_data() %>%
       lazy_dt() %>%
+      filter(ms_played > 30000) %>% 
       group_by(track_name, artist_name, album_name) %>% 
       summarise(
         minutes_listened = sum(ms_played) / (1000 * 60),
@@ -192,10 +201,7 @@ server <- function(input, output, session) {
   
   output$repart_plot <- renderPlotly({
     
-    data_with_hour <- filtered_data()
-    data_with_hour$hour <- format(as.POSIXlt(data_with_hour$time), "%H")
-    
-    listening_repartition <- data_with_hour %>%
+    listening_repartition <- filtered_data() %>%
       lazy_dt() %>%
       group_by(hour) %>% 
       summarise(minutes_listened = sum(ms_played) / (1000 * 60)) %>% 
@@ -425,6 +431,52 @@ server <- function(input, output, session) {
   width = "100%",
   align = "c"
   )
+  
+  output$mutual_artist <- renderText({
+    
+    mutual_artist <- all_data %>% 
+      group_by(artist_name) %>% 
+      summarise(n_j = sum(username == "Julka"), n_t = sum(username == "Tomek")) %>% 
+      filter(n_j > 100, n_t > 100) %>% # tymczasowe kryterium
+      slice_head(n = 1)
+    
+    mutual_artist_name <- mutual_artist$artist_name
+    artist_times <- mutual_artist$n_j + mutual_artist$n_t
+    
+    
+    HTML(paste(
+      "<span style='font-size: 15px; color:#ecf0f1'>Mutual artist:
+      </span><br>",
+      "<span style='font-size: 30px; font-weight: bold; color:#ecf0f1'>", 
+      mutual_artist_name, "</span><br>",
+      "<span style='font-size: 15px; color:#ecf0f1'>Together we listened to this artist:
+      </span><br>",
+      "<span style='font-size: 30px; font-weight: bold; color:#ecf0f1'>", 
+      artist_times, "</span>",
+      "<span style='font-size: 15px; color:#ecf0f1'>times</span><br>"
+    ))})
+  
+  output$mutual_song <- renderText({
+    
+    mutual_song <- all_data %>% 
+      group_by(artist_name, track_name) %>% 
+      summarise(n_j = sum(username == "Julka"), n_t = sum(username == "Tomek")) %>% 
+      filter(n_j > 50, n_t > 50) %>% # tymczasowe kryterium
+      slice_head(n = 1)
+    
+    mutual_song <- mutual_song$track_name
+    song_times <- mutual_songs$n_j + mutual_songs$n_t
+    
+    HTML(paste(
+      "<span style='font-size: 15px; color:#ecf0f1'>Mutual song:</span><br>",
+      "<span style='font-size: 30px; font-weight: bold; color:#ecf0f1'>", 
+      mutual_song, "</span><br>",
+      "<span style='font-size: 15px; color:#ecf0f1'>Together we played this song :</span><br>",
+      "<span style='font-size: 30px; font-weight: bold; color:#ecf0f1'>", 
+      song_times, "</span>",
+      "<span style='font-size: 15px; color:#ecf0f1'>times</span><br>"
+    ))})
+  
   
   output$minutes_plot <- renderPlotly({
     
