@@ -20,9 +20,20 @@ html_table_data <- HTML(".shiny-table tr td{
  color:#ecf0f1;
  background-color:#182f37;
 }")
+html_table_body <- HTML(".wrapper .content-wrapper .content .tab-content #shiny-tab-one_person .row .col-sm-6 .col-sm-20 .box .box-body #table .shiny-table tbody{
+ height:390px !important;
+}")
 html_row <- HTML(".wrapper .row{
  background-color:#182f37;
  transform:translatex(0px) translatey(0px);
+}")
+
+html_table_row <- HTML(".wrapper .content-wrapper .content .tab-content #shiny-tab-one_person .row .col-sm-6 .col-sm-20 .box .box-body #table .shiny-table tbody tr{
+ height:0px !important;
+}")
+
+html_shiny_table <- HTML(".wrapper .content-wrapper .content .tab-content #shiny-tab-one_person .row .col-sm-6 .col-sm-20 .box .box-body #table .shiny-table{
+ height:472px !important;
 }")
 
 html_navig <- HTML(".wrapper .main-header nav{
@@ -92,10 +103,10 @@ body <- dashboardBody(
   tabItems(
     tabItem(tabName = "one_person",
             tags$head(tags$style(
-              html_wrapper, html_table, html_table_data, html_row, html_navig,
-              html_sidebar, html_logo, html_content_div, html_box_body,
-              html_name, html_wrapper_box
-            )
+              html_wrapper, html_table, html_table_data, html_table_body,
+              html_row, html_table_row, html_shiny_table, html_navig, 
+              html_sidebar, html_logo, html_content_div, html_box_body, 
+              html_name)
             ),
             htmlOutput("name"),
             fluidRow(
