@@ -8,10 +8,11 @@ library(dtplyr)
 library(data.table)
 library(lubridate)
 
-julka_data <- read.csv("julka_filtered_data.csv")
-tomek_data <- read.csv("tomek_filtered_data.csv")
+julka_data <- read.csv("../../data/filtered_data/julka_filtered_data.csv")
+tomek_data <- read.csv("../../data/filtered_data/tomek_filtered_data.csv")
+nadia_data <- read.csv("../../data/filtered_data/nadia_filtered_data.csv")
 
-all_data <- bind_rows(julka_data, tomek_data)
+all_data <- bind_rows(julka_data, tomek_data, nadia_data)
 
 
 styles_file <- includeCSS("styles.css")
@@ -482,12 +483,12 @@ server <- function(input, output, session) {
     
     mutual_artist <- all_data %>% 
       group_by(artist_name) %>% 
-      summarise(n_j = sum(username == "Julka"), n_t = sum(username == "Tomek")) %>% 
+      summarise(n_j = sum(username == "Julka"), n_t = sum(username == "Tomek"), n_n = sum(username == "Nadia")) %>% 
       filter(n_j > 100, n_t > 100) %>% # tymczasowe kryterium
       slice_head(n = 1)
     
     mutual_artist_name <- mutual_artist$artist_name
-    artist_times <- mutual_artist$n_j + mutual_artist$n_t
+    artist_times <- mutual_artist$n_j + mutual_artist$n_t + mutual_artist$n_n
     
     
     HTML(paste(
@@ -506,14 +507,14 @@ server <- function(input, output, session) {
   
   output$mutual_song <- renderText({
     
-    mutual_song <- all_data %>% 
+    mutual_songs <- all_data %>% 
       group_by(artist_name, track_name) %>% 
-      summarise(n_j = sum(username == "Julka"), n_t = sum(username == "Tomek")) %>% 
+      summarise(n_j = sum(username == "Julka"), n_t = sum(username == "Tomek"), n_n = sum(username == "Nadia")) %>% 
       filter(n_j > 50, n_t > 50) %>% # tymczasowe kryterium
       slice_head(n = 1)
     
-    mutual_song <- mutual_song$track_name
-    song_times <- mutual_songs$n_j + mutual_songs$n_t
+    mutual_song <- mutual_songs$track_name
+    song_times <- mutual_songs$n_j + mutual_songs$n_t + mutual_songs$n_n 
     
     HTML(paste(
       "<span style='font-size: 15px; color:#ecf0f1'>Mutual song:</span><br>",
@@ -536,8 +537,12 @@ server <- function(input, output, session) {
       mutate(date = as.Date(time, format = "%Y-%m-%d")) %>% 
       filter(date > "2019-01-01") # bo byla tylko jakas jedna wartosc przed 2020
     
+    df3 <- nadia_data %>% 
+      mutate(date = as.Date(time, format = "%Y-%m-%d"))
+    
     df1$date <- as.Date(df1$date)
     df2$date <- as.Date(df2$date)
+    df3$date <- as.Date(df3$date)
     
     minutes_per_day_j <- df1 %>%
       group_by(date) %>%
@@ -554,7 +559,14 @@ server <- function(input, output, session) {
       mutate(cumsum = cumsum(total_minutes)) %>% 
       mutate(name = "Tomek")
     
-    df <- bind_rows(minutes_per_day_j, minutes_per_day_t)
+    minutes_per_day_n <- df3 %>% 
+      group_by(date) %>%
+      summarise(total_minutes = sum(ms_played) / (60 * 1000)) %>%
+      arrange(date) %>%
+      mutate(cumsum = cumsum(total_minutes)) %>% 
+      mutate(name = "Nadia")
+    
+    df <- bind_rows(minutes_per_day_j, minutes_per_day_t, minutes_per_day_n)
     
     
     minutes_plotly <- plot_ly(df, x = ~date, y = ~cumsum, color = ~name, 
@@ -563,7 +575,7 @@ server <- function(input, output, session) {
                                             "</br><b>Date:</b> ", date, 
                                             "</br><b>Minutes:</b> ", round(cumsum)),
                               type = "scatter", mode = "lines",
-                              colors = c("#EF5571", "#A386C0")) %>%
+                              colors = c("#EF5571", "#00B9F1", "#A386C0")) %>%
       layout(
         title = list(text = "Total minutes listened", 
                      y = 0.98, x = 0.5, xanchor = "center", yanchor =  "top",
