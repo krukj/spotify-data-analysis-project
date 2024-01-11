@@ -8,6 +8,7 @@ library(dtplyr)
 library(data.table)
 library(lubridate)
 
+#set working directory na spotify-data-analysis-project/code/dashboard
 julka_data <- read.csv("../../data/filtered_data/julka_filtered_data.csv")
 tomek_data <- read.csv("../../data/filtered_data/tomek_filtered_data.csv")
 nadia_data <- read.csv("../../data/filtered_data/nadia_filtered_data.csv")
