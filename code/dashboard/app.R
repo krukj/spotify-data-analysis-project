@@ -6,13 +6,16 @@ library(shinydashboard)
 library(shinyWidgets)
 library(dtplyr)
 library(data.table)
+library(lubridate)
 
 julka_data <- read.csv("julka_filtered_data.csv")
 tomek_data <- read.csv("tomek_filtered_data.csv")
 
 all_data <- bind_rows(julka_data, tomek_data)
 
+
 styles_file <- includeCSS("styles.css")
+
 
 css_sidebar <- HTML("#sidebarCollapsed{
  background-color:#182f37;
@@ -29,11 +32,13 @@ header <- dashboardHeader(
   title = "Spotify dashboard"
 )
 
+
+
 sidebar <- dashboardSidebar(
   tags$style(css_sidebar, css_logo),
   sidebarMenu(
-    menuItem(" Blend", tabName = "blend", icon = icon("dog")),
     menuItem(" Spotify", tabName = "one_person", icon = icon("dog")),
+    menuItem(" Blend", tabName = "blend", icon = icon("dog")),
     prettyRadioButtons(
       inputId = "person",
       label = "Choose person:", 
@@ -43,25 +48,29 @@ sidebar <- dashboardSidebar(
     ),
     splitLayout(cellWidths = c("50%", "50%"),  
                 dateInput("datefrom", "Date from:", format = "dd/mm/yy", 
-                          Sys.Date()-30, min = "2015-10-21"), # ustawic dobre min i max !!!
+                          Sys.Date()-60, min = "2015-10-21"), # ustawic dobre min i max !!!
                 dateInput("dateto", "Date to:", format = "dd/mm/yy", 
                           Sys.Date()))
   )
 )
 
+
+
+
 body <- dashboardBody(
-  tags$head(tags$style(styles_file
-  )),
+  tags$head(tags$style(styles_file)),
   tabItems(
     tabItem(tabName = "one_person",
             htmlOutput("name"),
             fluidRow(
+              
               column(width = 6,
                      box(
                        width = 12,
                        htmlOutput("text_songs"),
                        tableOutput("table"),
-                       plotlyOutput("repart_plot")
+                       plotlyOutput("repart_plot"),
+                       plotlyOutput("repartWeekPlot")
                      )
               ),
               
@@ -78,11 +87,11 @@ body <- dashboardBody(
                        htmlOutput("artist_image")
                      )
               ),
-              column(width = 6,
-                     plotlyOutput("density_plot",
-                                  width = "100%",
-                                  height = "300px")
-              )
+              # column(width = 6,
+              #        plotlyOutput("density_plot",
+              #                     width = "400px",
+              #                     height = "100px")
+              # )
             )
     ),
     tabItem(tabName = "blend",
@@ -179,19 +188,24 @@ server <- function(input, output, session) {
     filtered_data() %>%
       lazy_dt() %>%
       filter(ms_played > 30000) %>% 
-      group_by(track_name, artist_name, album_name) %>% 
+      group_by(track_name, artist_name, album_name, genre) %>% 
       summarise(
         minutes_listened = sum(ms_played) / (1000 * 60),
         songs_played = n()
       ) %>%
-      arrange(desc(songs_played)) %>% 
+      arrange(desc(songs_played), desc(minutes_listened)) %>% 
       collect() %>%
       na.omit() %>%
-      head(10) %>% 
+      head(10) %>%
+      ungroup() %>%
+      mutate(nr = row_number()) %>%
+      select(nr, everything()) %>%
       rename(
+        "Nr" = nr,
         "Track" = track_name,
         "Artist" = artist_name,
         "Album" = album_name,
+        "Genre" = genre,
         "Minutes" = minutes_listened,
         "Times" = songs_played
       )
@@ -209,33 +223,16 @@ server <- function(input, output, session) {
              repartition = (minutes_listened / total_time) * 100) %>%
       collect()
     
-    # nie wiem co to robi ale dziala
-    vals <- lapply(listening_repartition$repartition, 
-                   function(y) seq(0, y, by = 0.01))
-    y <- unlist(vals)
-    mid <- rep(listening_repartition$hour, lengths(vals))
-    d2 <- data.frame(
-      x = as.numeric(mid) - 0.4,  
-      xend = as.numeric(mid) + 0.4,  
-      y = y,
-      yend = y
-    )
-    
     # ggplot
-    gg <- ggplot(data = d2, aes(x = x + 1, xend = xend + 1, y = y, yend = yend,
-                                color = y,
-                                text = paste("</br><b>Hour: </b>", ceiling(x),
-                                             "</br><b>Repartition: </b>", 
-                                             round(y, digits = 1), "%"))) +
-      geom_segment(linewidth = 2) +
-      scale_color_gradient2(low = "#EF5571", mid = "#A386C0", high = "#00B9F1", 
-                            midpoint = max(d2$y)/2) +
-      guides(color = "none") +
-      scale_x_discrete(limits = sprintf("%02d", 0:23))
-    
-    
-    # ggplot to plotly
-    p <- ggplotly(gg, tooltip = "text")
+    listening_repartition %>%
+  ggplot(aes(x = hour + 1, y = repartition, text = paste("</br><b>Hour: </b>", hour,
+                                                         "</br><b>Repartition: </b>", 
+                                                         round(repartition, digits = 1), "%"))) +
+  geom_bar(stat = "identity", fill = "blue") +
+  scale_x_discrete(limits = sprintf("%02d", 0:23)) -> gg
+  
+
+ p <- ggplotly(gg, tooltip = "text")
     
     # layout 
     p <- p %>%
@@ -258,6 +255,50 @@ server <- function(input, output, session) {
       )
     p
   })
+  
+  
+  
+ output$repartWeekPlot <- renderPlotly({
+   filtered_data() %>%
+     lazy_dt() %>%
+     mutate(weekday = weekdays(ymd_hms(time))) %>%
+     group_by(weekday) %>%
+     summarise(minutes_listened = sum(ms_played) / (1000 * 60)) %>% 
+     mutate(total_time = sum(minutes_listened),
+            repartition = (minutes_listened / total_time) * 100,
+            weekday = factor(weekday, levels = c("poniedziałek", "wtorek", "środa", "czwartek", "piątek", "sobota", "niedziela"))) %>%
+    arrange(weekday) %>%
+     collect() -> listening_repartition
+
+
+    listening_repartition %>%
+      ggplot(aes(x = weekday, y = repartition, text = paste("</br><b>Weekday: </b>", weekday,
+                                                          "</br><b>Repartition: </b>", 
+                                                          round(repartition, digits = 1), "%"))) +
+  geom_bar(stat = "identity", fill = "blue") -> gg
+
+  ggplotly(gg, tooltip = "text") -> p
+
+  p <- p %>%
+      layout(
+        title = list(text = "Listening repartition over day", 
+                     y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',
+                     font = list(size = 15, color = "#ecf0f1")),
+        xaxis = list(title = list(text = "Hour",
+                                  font = list(size = 15, color = "#ecf0f1")), 
+                     tickfont = list(size = 14, color = '#ecf0f1'),
+                     showgrid = TRUE, gridcolor = '#385a65', gridwidth = 0.05),
+        yaxis = list(title = list(text = "Repartition (%)", 
+                                  font = list(size = 15, color = "#ecf0f1")), 
+                     tickfont = list(size = 14, color = '#ecf0f1'),
+                     showgrid = TRUE, gridcolor = '#385a65', gridwidth = 0.05),
+        plot_bgcolor = "#182f37",
+        paper_bgcolor = "#182f37",
+        showlegend = FALSE,
+        hoverlabel = list(font = list(color = '#ecf0f1'))
+      )
+    p
+ })
   
   
   fav_artist_df <- reactive({
@@ -321,7 +362,7 @@ server <- function(input, output, session) {
       collect() %>%
       ggplot(aes(x = artist_name, y = tempo, text = 
                    paste("</br><b>Artist: </b>", fav_artist_name[[1]]))) +
-      geom_violin(fill = "#1DB954", color = "#1DB954", size = 0.5) +
+      geom_violin(fill = "blue", color = "blue", size = 0.5) +
       coord_flip()
     
     dens_plot <- ggplotly(dens_plot, tooltip = "text") %>%
@@ -348,7 +389,10 @@ server <- function(input, output, session) {
   })
   
   
-  # BLEND
+  
+  
+  ######## BLEND #############
+  
   output$top <- renderText(
     HTML(paste("<span style = 'color: #ffffff; 
                line-height: 1.3em; 
@@ -432,6 +476,8 @@ server <- function(input, output, session) {
   align = "c"
   )
   
+  
+  
   output$mutual_artist <- renderText({
     
     mutual_artist <- all_data %>% 
@@ -456,6 +502,8 @@ server <- function(input, output, session) {
       "<span style='font-size: 15px; color:#ecf0f1'>times</span><br>"
     ))})
   
+  
+  
   output$mutual_song <- renderText({
     
     mutual_song <- all_data %>% 
@@ -476,6 +524,7 @@ server <- function(input, output, session) {
       song_times, "</span>",
       "<span style='font-size: 15px; color:#ecf0f1'>times</span><br>"
     ))})
+  
   
   
   output$minutes_plot <- renderPlotly({
