@@ -5,6 +5,8 @@
  left:-20px;
 }
 
+
+
 .wrapper .main-header nav{
  background-color:#385a65 !important;
 }
@@ -86,6 +88,18 @@
  transform:translatex(10px) translatey(0px);
 }
 
+#unique_arists_plot .svg-container{
+ top:13px;
+}
 
+#density_plot .svg-container{
+ top:127px;
+}
+
+/* Plot container */
+#density_plot .plot-container{
+ position:relative;
+ top:-55px;
+}
 
 
