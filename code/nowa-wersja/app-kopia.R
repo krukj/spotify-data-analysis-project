@@ -79,18 +79,30 @@ body <- dashboardBody(
                      box(
                        width = 12,
                        withSpinner(htmlOutput("text_songs"),
-                                   color = "#1ED760"
+                                   color = "#385a65",
+                                   type = 3,
+                                   color.background = "#182f37",
+                                   size = 0.5
                        ),
                        withSpinner(tableOutput("table"),
-                                   color = "#1ED760"
+                                   color = "#385a65",
+                                   type = 3,
+                                   color.background = "#182f37",
+                                   size = 0.5
                        ),
                        withSpinner(plotlyOutput("repart_plot",
                                    height = "300px"),
-                                   color = "#1ED760"
+                                   color = "#385a65",
+                                   type = 3,
+                                   color.background = "#182f37",
+                                   size = 0.5
                        ),
                        withSpinner(plotlyOutput("unique_arists_plot",
                                     height = "300px"),
-                                   color = "#1ED760"
+                                   color = "#385a65",
+                                   type = 3,
+                                   color.background = "#182f37",
+                                   size = 0.5
                        )
                      )
               ),
@@ -99,7 +111,10 @@ body <- dashboardBody(
                      box(
                        width = 12,
                        withSpinner(htmlOutput("text_artist"),
-                                   color = "#1ED760"
+                                   color = "#385a65",
+                                   type = 3,
+                                   color.background = "#182f37",
+                                   size = 0.5
                        )
                      ) 
               ),
@@ -108,7 +123,10 @@ body <- dashboardBody(
                      box(
                        width = 12,
                        withSpinner(htmlOutput("artist_image"),
-                                   color = "#1ED760"
+                                   color = "#385a65",
+                                   type = 3,
+                                   color.background = "#182f37",
+                                   size = 0.5
                        )
                      )
               ),
@@ -116,7 +134,10 @@ body <- dashboardBody(
                      withSpinner(plotlyOutput("density_plot",
                                   width = "600px",
                                   height = "300px"),
-                                 color = "#1ED760"
+                                 color = "#385a65",
+                                 type = 3,
+                                 color.background = "#182f37",
+                                 size = 0.5
                      )
               ),
               column(width = 6,
@@ -126,8 +147,12 @@ body <- dashboardBody(
                                  plotOutput("radar_plot",
                                   width = "100%",
                                   height = "400px"),
-                                color = "#1ED760"
-                     )
+                                color = "#385a65",
+                                type = 3,
+                                color.background = "#182f37",
+                                size = 0.5
+                     ),
+                     style = "margin-top: 40px;"
               )
             )
     ),
@@ -154,20 +179,29 @@ body <- dashboardBody(
                      box(
                        width = 12,
                       withSpinner(htmlOutput("mutual_artist"),
-                                  color = "#1ED760"
+                                  color = "#385a65",
+                                  type = 3,
+                                  color.background = "#182f37",
+                                  size = 0.5
                       )
                      )),
               column(width = 4,
                      box(
                        width = 12,
                        withSpinner(htmlOutput("mutual_song"),
-                                   color = "#1ED760"
+                                   color = "#385a65",
+                                   type = 3,
+                                   color.background = "#182f37",
+                                   size = 0.5
                        )
                      )),
               column(width = 12,
                      withSpinner(plotlyOutput("minutes_plot",
                                   height = "500px"),
-                                 color = "#1ED760"))
+                                 color = "#385a65",
+                                 type = 3,
+                                 color.background = "#182f37",
+                                 size = 0.5))
     )
   )
 ))
