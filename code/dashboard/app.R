@@ -19,7 +19,6 @@ nadia_data %>%
 all_data <- bind_rows(julka_data, tomek_data, nadia_data)
 
 
-
 styles_file <- includeCSS("styles.css")
 
 
@@ -75,7 +74,9 @@ body <- dashboardBody(
                      box(
                        width = 12,
                        htmlOutput("text_songs"),
-                       tableOutput("table"),
+                       withSpinner(tableOutput("table"),
+                                   color = "",
+                                   type = 1),
                        plotlyOutput("repart_plot",
                                     height = "300px"),
                        plotlyOutput("unique_arists_plot",
@@ -660,7 +661,8 @@ server <- function(input, output, session) {
                                             "</br><b>Minutes:</b> ",
                                             round(cumsum)),
                               type = "scatter", mode = "lines",
-                              colors = c("#EF5571", "#00B9F1", "#A386C0")) %>%
+                              colors = c("#EF5571", "#00B9F1", "#A386C0"),
+                              line = list(width = 4)) %>%
       layout(
         title = list(text = "Total minutes listened", 
                      y = 0.98, x = 0.5, xanchor = "center", yanchor =  "top",

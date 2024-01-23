@@ -7,11 +7,12 @@ library(shinyWidgets)
 library(dtplyr)
 library(data.table)
 library(lubridate)
+library(shinycssloaders)
 
 #set working directory na spotify-data-analysis-project/code/dashboard
-julka_data <- read.csv("/Users/julia/Desktop/semestr-3/twd/projekt-2-repo/spotify-data-analysis-project/data/filtered_data/julka_filtered_data.csv")
-tomek_data <- read.csv("/Users/julia/Desktop/semestr-3/twd/projekt-2-repo/spotify-data-analysis-project/data/filtered_data/tomek_filtered_data.csv")
-nadia_data <- read.csv("/Users/julia/Desktop/semestr-3/twd/projekt-2-repo/spotify-data-analysis-project/data/filtered_data/nadia_filtered_data.csv")
+julka_data <- read.csv("../../data/filtered_data/julka_filtered_data.csv")
+tomek_data <- read.csv("../../data/filtered_data/tomek_filtered_data.csv")
+nadia_data <- read.csv("../../data/filtered_data/nadia_filtered_data.csv")
 
 nadia_data %>% 
   filter(time < "2023-12-08") -> nadia_data
@@ -20,7 +21,7 @@ all_data <- bind_rows(julka_data, tomek_data, nadia_data)
 
 
 
-styles_file <- includeCSS("styles.css")
+styles_file <- includeCSS("styles-kopia.css")
 
 
 css_sidebar <- HTML("#sidebarCollapsed{
@@ -76,32 +77,46 @@ body <- dashboardBody(
               column(width = 6,
                      box(
                        width = 12,
-                       htmlOutput("text_songs"),
-                       tableOutput("table"),
-                       plotlyOutput("repart_plot",
+                       withSpinner(htmlOutput("text_songs"),
+                                   color = "#1ED760"
+                       ),
+                       withSpinner(tableOutput("table"),
+                                   color = "#1ED760"
+                       ),
+                       withSpinner(plotlyOutput("repart_plot",
+                                   height = "300px"),
+                                   color = "#1ED760"
+                       ),
+                       withSpinner(plotlyOutput("unique_arists_plot",
                                     height = "300px"),
-                       plotlyOutput("unique_arists_plot",
-                                    height = "300px")
+                                   color = "#1ED760"
+                       )
                      )
               ),
               
               column(width = 2,
                      box(
                        width = 12,
-                       htmlOutput("text_artist")
+                       withSpinner(htmlOutput("text_artist"),
+                                   color = "#1ED760"
+                       )
                      ) 
               ),
               
               column(width = 4,
                      box(
                        width = 12,
-                       htmlOutput("artist_image")
+                       withSpinner(htmlOutput("artist_image"),
+                                   color = "#1ED760"
+                       )
                      )
               ),
               column(width = 6,
-                     plotlyOutput("density_plot",
+                     withSpinner(plotlyOutput("density_plot",
                                   width = "600px",
-                                  height = "300px")
+                                  height = "300px"),
+                                 color = "#1ED760"
+                     )
               )
             )
     ),
@@ -127,19 +142,24 @@ body <- dashboardBody(
               column(width = 4,
                      box(
                        width = 12,
-                       htmlOutput("mutual_artist")
+                      withSpinner(htmlOutput("mutual_artist"),
+                                  color = "#1ED760"
+                      )
                      )),
               column(width = 4,
                      box(
                        width = 12,
-                       htmlOutput("mutual_song")
+                       withSpinner(htmlOutput("mutual_song"),
+                                   color = "#1ED760"
+                       )
                      )),
               column(width = 12,
-                     plotlyOutput("minutes_plot",
-                                  height = "500px")))
+                     withSpinner(plotlyOutput("minutes_plot",
+                                  height = "500px"),
+                                 color = "#1ED760"))
     )
   )
-)
+))
 
 # app
 ui <- dashboardPage(
@@ -376,7 +396,7 @@ server <- function(input, output, session) {
         minutes_listened = round(sum(ms_played) / (1000 * 60)),
         songs_played = n()
       ) %>%
-      arrange(desc(songs_played)) %>%
+      arrange(desc(minutes_listened)) %>%
       collect() %>%
       na.omit() %>%
       head(1)
