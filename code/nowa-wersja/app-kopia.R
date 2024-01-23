@@ -8,6 +8,7 @@ library(dtplyr)
 library(data.table)
 library(lubridate)
 library(shinycssloaders)
+library(fmsb)
 
 #set working directory na spotify-data-analysis-project/code/dashboard
 julka_data <- read.csv("../../data/filtered_data/julka_filtered_data.csv")
@@ -47,7 +48,7 @@ sidebar <- dashboardSidebar(
   tags$style(css_sidebar, css_logo),
   sidebarMenu(
     menuItem(" Spotify", tabName = "one_person", icon = icon("dog")),
-    menuItem(" Blend", tabName = "blend", icon = icon("dog")),
+    menuItem(" Blend", tabName = "blend", icon = icon("users")),
     prettyRadioButtons(
       inputId = "person",
       label = "Choose person:", 
@@ -116,6 +117,16 @@ body <- dashboardBody(
                                   width = "600px",
                                   height = "300px"),
                                  color = "#1ED760"
+                     )
+              ),
+              column(width = 6,
+                     align = "center",
+                     htmlOutput("radar_title"),
+                     withSpinner(
+                                 plotOutput("radar_plot",
+                                  width = "100%",
+                                  height = "400px"),
+                                color = "#1ED760"
                      )
               )
             )
@@ -509,6 +520,63 @@ server <- function(input, output, session) {
       )
     
     dens_plot
+  })
+  
+  output$radar_title <- renderText({
+    HTML(paste("<span style='font-size: 15px;
+               color:#ecf0f1;
+               text-align: center;
+               font-family: Open Sans, sans-serif;
+               margin-bottom: 500px;
+               '>Mean of categories for top 5 listend songs</span><br>"))
+  })
+  
+  # most 5 played song
+  top_five_songs_df <- reactive({
+    filtered_data() %>% 
+      lazy_dt() %>%
+      group_by(track_name) %>% 
+      summarise(songs_played = n()) %>%
+      arrange(desc(songs_played)) %>%
+      collect() %>%
+      na.omit() %>%
+      head(5)
+  })
+  
+  song_features <- reactive({
+    filtered_data() %>% 
+      select(track_name, danceability, energy, speechiness, acousticness, instrumentalness, liveness, valence) %>% 
+      distinct(track_name, .keep_all = TRUE) %>%
+      right_join(top_five_songs_df(), by = "track_name") %>% 
+      select(-c(track_name, songs_played)) %>%
+      summarise(
+        danceability = mean(danceability, na.rm = TRUE),
+        energy = mean(energy, na.rm = TRUE),
+        speechiness = mean(speechiness, na.rm = TRUE),
+        acousticness = mean(acousticness, na.rm = TRUE),
+        instrumentalness = mean(instrumentalness, na.rm = TRUE),
+        liveness = mean(liveness, na.rm = TRUE),
+        valence = mean(valence, na.rm = TRUE)
+      )
+  })
+  
+  output$radar_plot <- renderPlot({
+
+    top_five_songs_features <- rbind(rep(1, ncol(song_features())), rep(0, ncol(song_features())), song_features())
+
+    par(bg = "#182f37", col = "#ecf0f1")
+    rad <- radarchart(top_five_songs_features,
+                      seg = 3,
+                      title = "",
+                      cglty = 1,
+                      cglcol = "#ecf0f1",
+                      pcol = person_color(),
+                      pfcol = alpha(person_color(), 0.3),
+                      col = "#ecf0f1",
+                      caxislabels = c(0, 0.25, 0.5, 0.75, 1),
+                      plwd = 3)
+
+    rad
   })
   
   
