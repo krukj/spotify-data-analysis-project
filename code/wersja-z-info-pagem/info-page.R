@@ -85,7 +85,7 @@ body <- dashboardBody(
             htmlOutput("about_content"),
             fluidRow(
               column(width = 4,
-                     uiOutput("logo_mini")
+                     imageOutput("logo_mini")
               )
             )
     ),
@@ -360,11 +360,11 @@ server <- function(input, output, session) {
     )
   })
   
-  output$logo_mini <- renderUI({
-    img(src = "/Users/nadiaserafin/Desktop/studia/sem 3/twd/pro2/scripts/logo_mini.png",
-        class = "logo_mini",
-        style = "width: 280px;
-                 height: 280px")
+  output$logo_mini <- renderImage({
+    list(src = "logo_mini.png",
+         width = 280,
+         height = 280,
+         class = "logo_mini")
   })
   
   #SPOTIFY
