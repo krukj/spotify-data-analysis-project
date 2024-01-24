@@ -47,6 +47,7 @@ header <- dashboardHeader(
 sidebar <- dashboardSidebar(
   tags$style(css_sidebar, css_logo),
   sidebarMenu(
+    menuItem(" Info Page", tabName = "info_page", icon = icon("info")),
     menuItem(" Spotify", tabName = "one_person", icon = icon("dog")),
     menuItem(" Blend", tabName = "blend", icon = icon("users")),
     prettyRadioButtons(
@@ -71,6 +72,23 @@ sidebar <- dashboardSidebar(
 body <- dashboardBody(
   tags$head(tags$style(styles_file)),
   tabItems(
+    tabItem(tabName = "info_page",
+            htmlOutput("info", style = "margin-bottom: 20px;"),
+            htmlOutput("aim"),
+            htmlOutput("aim_content"),
+            fluidRow(
+              column(width = 4,
+                     uiOutput("our_colors")
+              )
+            ),
+            htmlOutput("about"),
+            htmlOutput("about_content"),
+            fluidRow(
+              column(width = 4,
+                     uiOutput("logo_mini")
+              )
+            )
+    ),
     tabItem(tabName = "one_person",
             htmlOutput("name"),
             fluidRow(
@@ -142,7 +160,11 @@ body <- dashboardBody(
               ),
               column(width = 6,
                      align = "center",
-                     htmlOutput("radar_title"),
+                     htmlOutput("radar_title", style = "margin-top: 180px; margin-bottom: -20px; position: relative; z-index: 1;")
+              ),
+              column(width = 6,
+                     align = "center",
+                     #htmlOutput("radar_title"),
                      withSpinner(
                                  plotOutput("radar_plot",
                                   width = "100%",
@@ -152,7 +174,7 @@ body <- dashboardBody(
                                 color.background = "#182f37",
                                 size = 0.5
                      ),
-                     style = "margin-top: 40px;"
+                     style = "margin-top: -20px; position: relative; z-index: 0;"
               )
             )
     ),
@@ -244,6 +266,95 @@ server <- function(input, output, session) {
                       "  Nadia" = "#00B9F1")
     p_color
   })
+  
+  #INFO
+  
+  output$info <- renderText(
+    HTML(paste("<span style = 'color: #ffffff; 
+               font-family: Roboto, sans-serif;
+               line-height: 1.3em; 
+               text-transform: uppercase; 
+               text-align: left;
+               text-decoration:none;
+               text-shadow:none;
+               white-space:normal;
+               letter-spacing:4.1px;
+               word-spacing:-1.1px;
+               column-count:1;
+               direction:ltr;
+               top:-8px;' >INFO PAGE</span><br>"))
+  )
+  
+  output$aim <- renderText(
+    HTML(paste(
+      "<span 
+      style=
+    'font-size: 15px;
+    font-family: Roboto, sans-serif;
+    color:#ecf0f1; 
+    font-size:26px;
+    text-align:right;
+    font-weight:600;
+    position:relative;
+    top:-4px;'>Aim of the project</span><br>"))
+  )
+  
+  output$aim_content <- renderText(
+    HTML(paste("<span style='font-size: 15px; color:#ecf0f1; text-align: justify;'>We are Julka, Tomek and Nadia and the aim of this project was to ",
+               "analyse and present our Spotify data. We have created two panels - Blend and Spotify.<br>",
+               "<br>",
+               "Blend shows some relationships between our data such as comparison by listening time, average tempo of songs, etc. We have also checked ",
+               "what is our mutual favourite artist and song.<br>",
+               "<br>",
+               "In the Spotify panel you can choose a specific person and date ",
+               "and see what are theirs top 10 artists in the chosen period of time ",
+               "and some other analysis.<br>",
+               "Each person is represented by one of the three colours:",
+               "<br>",
+               "<div style='text-align: center;'>
+               <span style='font-size: 80px;'>
+               <span style='display: inline-block; vertical-align: middle;'>
+               <i class='fas fa-paint-brush' style='color: #EF5571; margin-right: 10px;'></i>
+               <i class='fas fa-paint-brush' style='color: #A386C0; margin-right: 10px;'></i>
+               <i class='fas fa-paint-brush' style='color: #00B9F1;'></i>
+               </span></span><br>
+               <span style='font-size: 20px; color: #EF5571; margin-right: 70px;'>Julka</span>
+               <span style='font-size: 20px; color: #A386C0; margin-right: 70px;'>Tomek</span>
+               <span style='font-size: 20px; color: #00B9F1; '>Nadia</span>
+               </div><br>")
+    )
+  )
+  
+  output$about <- renderText(
+    HTML(paste(
+      "<span style=
+    'font-size: 15px;
+    color:#ecf0f1; 
+    font-size:26px;
+    text-align:right;
+    font-weight:600;
+    position:relative;
+    top:-4px;'>About us</span><br>"))
+  )
+  
+  output$about_content <- renderText({
+    HTML(paste("<span style='font-size: 15px; color:#ecf0f1; text-align: justify;'>
+               We are second-year students of the Engineering and Data Science at Warsaw University
+               of Technology at the Faculty of Mathematics and Information Science.<br>",
+               "This project was made as a part of the subject Data Visualisation Techniques.<br>",
+               "<br>",
+               "Hope you like it :))<br></span><br>")
+    )
+  })
+  
+  output$logo_mini <- renderUI({
+    img(src = "/Users/nadiaserafin/Desktop/studia/sem 3/twd/pro2/scripts/logo_mini.png",
+        class = "logo_mini",
+        style = "width: 280px;
+                 height: 280px")
+  })
+  
+  #SPOTIFY
   
   output$name <- renderText(
     HTML(paste("<span 
@@ -561,7 +672,7 @@ server <- function(input, output, session) {
                color:#ecf0f1;
                text-align: center;
                font-family: Open Sans, sans-serif;
-               margin-bottom: 500px;
+               margin-bottom: 0px;
                '>Mean of categories for top 5 listend songs</span><br>"))
   })
   

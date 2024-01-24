@@ -7,6 +7,7 @@ library(shinyWidgets)
 library(dtplyr)
 library(data.table)
 library(lubridate)
+library(shinycssloaders)
 
 #set working directory na spotify-data-analysis-project/code/dashboard
 julka_data <- read.csv("../../data/filtered_data/julka_filtered_data.csv")

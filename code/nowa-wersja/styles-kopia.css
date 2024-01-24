@@ -99,6 +99,12 @@
  transform:translatex(10px) translatey(0px);
 }
 
+#info span{
+ font-size:38px;
+ display:inline-block;
+ transform:translatex(10px) translatey(0px);
+}
+
 #unique_arists_plot .svg-container{
  top:13px;
 }
@@ -174,6 +180,14 @@ position:relative;
 /* Dateto label */
 #dateto-label{
  font-size:16px;
+}
+
+/* info */
+
+#info span{
+ font-size:38px;
+ display:inline-block;
+ transform:translatex(10px) translatey(0px);
 }
 
 
