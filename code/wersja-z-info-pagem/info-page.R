@@ -169,7 +169,7 @@ body <- dashboardBody(
               ),
               column(width = 6,
                      align = "center",
-                     htmlOutput("radar_title", style = "margin-top: 20px; margin-bottom: -20px; position: relative; z-index: 1;")
+                     htmlOutput("radar_title", style = "margin-top: 30px; margin-bottom: -20px; position: relative; z-index: 1;")
               ),
               column(width = 6,
                      align = "center",
