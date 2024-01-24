@@ -353,7 +353,7 @@ server <- function(input, output, session) {
   
   output$about_content <- renderText({
     HTML(paste("<span style='font-size: 15px; color:#ecf0f1; text-align: justify;'>
-               We are second-year students of the Engineering and Data Science at Warsaw University
+               We are second-year students of Engineering and Data Science at Warsaw University
                of Technology at the Faculty of Mathematics and Information Science.<br>",
                "This project was made as a part of the subject Data Visualisation Techniques.<br>",
                "<br>",
