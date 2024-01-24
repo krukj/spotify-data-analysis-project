@@ -159,17 +159,20 @@ body <- dashboardBody(
             ),
             fluidRow(
               column(width = 6,
-                     withSpinner(plotlyOutput("unique_arists_plot",
-                                              height = "340px"),
-                                 color = "#385a65",
-                                 type = 3,
-                                 color.background = "#182f37",
-                                 size = 0.5
+                     div(
+                       withSpinner(
+                         plotlyOutput("unique_arists_plot", height = "340px"),
+                         color = "#385a65",
+                         type = 3,
+                         color.background = "#182f37",
+                         size = 0.5
+                       ),
+                       style = "margin-top: 20px;"  # To przesunie całą kolumnę w dół o 20 pikseli
                      )
               ),
               column(width = 6,
                      align = "center",
-                     htmlOutput("radar_title", style = "margin-top: 30px; margin-bottom: -20px; position: relative; z-index: 1;")
+                     htmlOutput("radar_title", style = "margin-top: 40px; margin-bottom: -20px; position: relative; z-index: 1;")
               ),
               column(width = 6,
                      align = "center",
