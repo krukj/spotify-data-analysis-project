@@ -11,10 +11,9 @@ library(shinycssloaders)
 library(fmsb)
 
 #set working directory na spotify-data-analysis-project/code/dashboard
-julka_data <- read.csv("/Users/julia/Desktop/semestr-3/twd/projekt-2-repo/spotify-data-analysis-project/data/filtered_data/julka_filtered_data.csv")
-tomek_data <- read.csv("/Users/julia/Desktop/semestr-3/twd/projekt-2-repo/spotify-data-analysis-project/data/filtered_data/tomek_filtered_data.csv")
-nadia_data <- read.csv("/Users/julia/Desktop/semestr-3/twd/projekt-2-repo/spotify-data-analysis-project/data/filtered_data/nadia_filtered_data.csv")
-
+julka_data <- read.csv("../../../data/filtered_data/julka_filtered_data.csv")
+tomek_data <- read.csv("../../../data/filtered_data/tomek_filtered_data.csv")
+nadia_data <- read.csv("../../../data/filtered_data/nadia_filtered_data.csv")
 
 nadia_data %>% 
   filter(time < "2023-12-08") -> nadia_data
@@ -23,7 +22,7 @@ all_data <- bind_rows(julka_data, tomek_data, nadia_data)
 
 
 
-styles_file <- includeCSS("~/Desktop/semestr-3/twd/projekt-2-brudno/spotify-projekt-ja/nowy-projekt/styles.css")
+styles_file <- includeCSS("styles.css")
 
 
 css_sidebar <- HTML("#sidebarCollapsed{
@@ -174,7 +173,7 @@ body <- dashboardBody(
               ),
               column(width = 6,
                      align = "center",
-                     htmlOutput("radar_title", style = "margin-top: 40px; margin-bottom: -20px; position: relative; z-index: 1;")
+                     htmlOutput("radar_title", style = "margin-top: 50px; margin-bottom: -20px; position: relative; z-index: 1;")
               ),
               column(width = 6,
                      align = "center",
@@ -316,7 +315,7 @@ server <- function(input, output, session) {
   
   output$aim_content <- renderText(
     HTML(paste("<span style='font-size: 15px; color:#ecf0f1; text-align: justify;'>We are Julka, Tomek and Nadia and the aim of this project was to ",
-               "analyse and present our Spotify data. We have created two panels - Blend and Stats<br>",
+               "analyse and present our Spotify data. We have created two panels - Blend and Stats.<br>",
                "<br>",
                "Blend shows some relationships between our data such as comparison by listening time, average tempo of songs, etc. We have also checked ",
                "what is our mutual favourite artist and song.<br>",
@@ -363,7 +362,7 @@ server <- function(input, output, session) {
   })
   
   output$logo_mini <- renderImage({
-    img_src <- "/Users/julia/Desktop/WMiNI-znak-EN-RGB.png"
+    img_src <- "WMiNI-znak-EN-RGB.png"
     list(src = img_src, width = "100%", height = "auto")
   }, deleteFile = FALSE)
   
@@ -644,7 +643,6 @@ server <- function(input, output, session) {
                color:#ecf0f1;
                text-align: center;
                font-family: Roboto, sans-serif;
-               font-weight: bold;
                margin-bottom: 0px;
                '>Mean of categories for top 5 listened songs</span><br>"))
   })
